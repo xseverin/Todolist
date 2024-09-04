@@ -1,42 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UpdateTodoApi } from '../todo/todoAPI.ts';
 
 interface Todo {
-    id: string;
-    name: string;
-    done: boolean;
+    Id: string;
+    Name: string;
+    Done: boolean;
 }
 
 interface EditTodoFormProps {
     todo: Todo;
-    onSave: () => void;
-    onCancel: () => void;
+    disableEdit?: boolean; // Prop for disabling edit
 }
 
-const EditTodoForm: React.FC<EditTodoFormProps> = ({ todo }) => {
-    const [name, setName] = useState(todo.name);
+const EditTodoForm: React.FC<EditTodoFormProps> = ({ todo, disableEdit = false }) => {
+    const [Name, setName] = useState(todo.Name);
+    const [error, setError] = useState<string | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
     useEffect(() => {
-        setName(todo.name);
+        setName(todo.Name);
     }, [todo]);
+
+    useEffect(() => {
+        adjustTextareaHeight();
+    }, [Name]);
+
+    const adjustTextareaHeight = () => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (!disableEdit) {
+            setName(e.target.value);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await UpdateTodoApi(todo.id, name);
+        if (disableEdit) return;
+
+        try {
+            await UpdateTodoApi(todo.Id, Name);
+        } catch (err) {
+            setError('Failed to update todo. Please try again.');
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!disableEdit && e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e);
+        }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div>
-                <input
-                    type="text"
+        <form onSubmit={handleSubmit} className="w-full">
+            <span className="relative">
+                <textarea
                     id="name"
-                    value={name}
-                    className={todo.done ? 'line-through hover:no-underline opacity-50' : ''}
-                    style={{backgroundColor: 'transparent'}}
-                    onChange={(e) => setName(e.target.value)}
+                    value={Name}
+                    ref={textareaRef}
+                    className={`focus:outline-none focus:ring-2 focus:ring-blue-300 w-full bg-transparent duration-300 ${todo.Done ? 'line-through opacity-50' : ''}`}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    rows={1}
+                    disabled={disableEdit} // Disable editing
+                    style={{ resize: 'none', overflow: 'hidden', lineHeight: '1.5em', cursor: disableEdit ? 'default' : 'text' }} // Pointer changes based on state
                 />
-            </div>
+                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            </span>
         </form>
     );
 };

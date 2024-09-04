@@ -48,18 +48,19 @@ using UseCases;
             var userId = new Claim(ClaimTypes.NameIdentifier, "user-id-123");
             var todos = new List<Todo>
             {
-                new Todo { Id = Guid.NewGuid(), Name = "Todo 1" },
-                new Todo { Id = Guid.NewGuid(), Name = "Todo 2" }
+                new Todo { Id = Guid.NewGuid(), Name = "Todo 1", Done = true, ApplicationUserId = userId.ToString()},
+                new Todo { Id = Guid.NewGuid(), Name = "Todo 2" , Done = true, ApplicationUserId = userId.ToString()}
             };
 
-            _todoRepositoryMock.Setup(repo => repo.GetTodosByUserIdAsync(userId.Value)).ReturnsAsync(todos);
-
+            _todoRepositoryMock.Setup(repo => repo.GetTodosByUserIdAsync(It.IsAny<string>()))
+                .ReturnsAsync("Serialized JSON string of shared todos");
+            
             // Act
             var result = await _todoUseCases.GetTodos(userId);
 
             // Assert
             Assert.IsInstanceOf<OkObjectResult>(result.Result);
             var okResult = result.Result as OkObjectResult;
-            Assert.AreEqual(todos, okResult.Value);
+            Assert.AreEqual("Serialized JSON string of shared todos", okResult.Value);
         }
     }

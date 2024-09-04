@@ -1,12 +1,5 @@
-import { Breadcrumb } from "antd";
-import { Login } from "../features/user/Login";
+import LoginForm from "../features/Form/LoginForm.tsx";
 
-export const LoginPage = () => (
-  <>
-    <Breadcrumb
-      style={{ margin: "16px 0" }}
-      items={[{ key: 1, title: "Login", separator: "/" }]}
-    ></Breadcrumb>
-    <Login></Login>
-  </>
-);
+export const LoginPage = () => {
+    return ( <LoginForm />);
+};

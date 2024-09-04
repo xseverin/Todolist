@@ -75,7 +75,7 @@ public class UserServiceUpdateProfileTests
     {
         // Arrange
         var user = new ApplicationUser { Id = "1", UserName = "testuser", Email = "oldemail@example.com" };
-        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe", Address = "123 Street" };
+        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe" };
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.NameIdentifier, user.Id) }));
 
         _userManagerMock.Setup(um => um.GetUserAsync(claimsPrincipal)).ReturnsAsync(user);
@@ -96,7 +96,7 @@ public class UserServiceUpdateProfileTests
     public async Task UpdateProfileAsync_ShouldReturnError_WhenUserNotFound()
     {
         // Arrange
-        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe", Address = "123 Street" };
+        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe" };
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.NameIdentifier, "1") }));
 
         _userManagerMock.Setup(um => um.GetUserAsync(claimsPrincipal)).ReturnsAsync((ApplicationUser)null);
@@ -114,7 +114,7 @@ public class UserServiceUpdateProfileTests
     {
         // Arrange
         var user = new ApplicationUser { Id = "1", UserName = "testuser", Email = "oldemail@example.com" };
-        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe", Address = "123 Street" };
+        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe" };
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.NameIdentifier, user.Id) }));
 
         _userManagerMock.Setup(um => um.GetUserAsync(claimsPrincipal)).ReturnsAsync(user);
@@ -133,7 +133,7 @@ public class UserServiceUpdateProfileTests
     {
         // Arrange
         var user = new ApplicationUser { Id = "1", UserName = "testuser", Email = "oldemail@example.com" };
-        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe", Address = "123 Street" };
+        var userProfile = new UserProfile { Email = "newemail@example.com", FirstName = "John", LastName = "Doe" };
         var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.NameIdentifier, user.Id) }));
 
         _userManagerMock.Setup(um => um.GetUserAsync(claimsPrincipal)).ReturnsAsync(user);

@@ -1,93 +1,111 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Form, Input, Button, message } from 'antd';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { message } from 'antd';
 import axios from 'axios';
 
-import { Outlet, useLocation, useNavigate } from "react-router";
+import Header from '../features/Form/Header';
+import Password from '../features/Form/Password';
+import CleanAllButton from '../features/Form/CleanAllButton';
+import Button from '../features/Form/Button.tsx';
 
 interface Params {
     token: string;
 }
 
+interface ResetPasswordForm {
+    password: string;
+    confirmPassword: string;
+}
 
 const ResetPassword: React.FC = () => {
     const { token } = useParams<Params>();
-    const [form] = Form.useForm();
+    const { register, handleSubmit, setError, formState: { errors }, reset, getValues } = useForm<ResetPasswordForm>();
     const navigate = useNavigate();
 
-    const onFinish = async (values: { password: string, confirmPassword: string }) => {
+    const [serverErrors, setServerErrors] = useState<{ [key: string]: string[] }>({});
+
+    const onFinish = async (values: ResetPasswordForm) => {
         const { password, confirmPassword } = values;
+
+        // Clear any existing server errors
+        setServerErrors({});
+
         if (password !== confirmPassword) {
+            setError('confirmPassword', { message: 'Passwords do not match' });
             message.error('Passwords do not match');
-        } else {
-            try {
-                const response = await axios.put(`https://localhost:1002/User/resetpassword?token=${token}`, {
-                    password
+            return;
+        }
+
+        try {
+            const response = await axios.put(`https://localhost:1002/User/resetpassword?token=${token}`, { password });
+
+            if (response.data.isSucceed) {
+                message.success('Password reset successfully');
+                navigate('/login');
+            } else if (response.data.messages) {
+                const newServerErrors: { [key: string]: string[] } = {};
+
+                // Process server-side error messages
+                Object.keys(response.data.messages).forEach(field => {
+                    if (field.startsWith("Password")) {
+                        // Handle password-related errors
+                        if (!newServerErrors.password) {
+                            newServerErrors.password = [];
+                        }
+                        //console.log(response.data.messages[field], field);
+                        newServerErrors.password.push(...response.data.messages[field]);
+                    } else if (field === "Token") {
+                        // Handle token errors
+                        newServerErrors.token = response.data.messages[field];
+                        // Display token error messages
+                        response.data.messages[field].forEach(msg => message.error(msg));
+                    } else {
+                        // Handle other fields dynamically
+                        newServerErrors[field.toLowerCase()] = response.data.messages[field];
+                    }
                 });
-                if (response.data.isSucceed) {
-                    message.success('Password reset successfully');
-                    navigate('/login');
-                } 
-                else if (response.data.messages?.password) {
-                    form.setFields([
-                        { name: 'password', errors: response.data.messages.password }
-                    ]);}
-                   else if ( response.data.messages?.token) {
-                    message.error(response.data.messages.token);
+                //console.log(newServerErrors);
+                // Update the serverErrors state
+                setServerErrors(newServerErrors);
+
+                // Display a general error message
+                if (!newServerErrors.token) {
+                    message.error("Password reset failed. Please check the fields for more details.");
                 }
-                else {
-                    message.error(response.data.message || 'Error resetting password');
-                }
-            } catch {
-                message.error('Server Error');
+            } else {
+                message.error(response.data.message || 'Error resetting password');
             }
+        } catch (error) {
+            message.error('Server Error');
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <Form
-                form={form}
-                name="reset-password"
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 16 }}
-                style={{ maxWidth: 600 }}
-                initialValues={{ remember: true }}
-                onFinish={onFinish}
-                autoComplete="off"
-                className="bg-white p-6 rounded shadow-md w-full max-w-sm"
-            >
-                <h2 className="text-2xl font-bold mb-4">Сброс пароля</h2>
-                <Form.Item
-                    name="password"
-                    label="Новый пароль"
-                    rules={[{ required: true, message: 'Введите новый пароль!' }]}
-                >
-                    <Input.Password
-                        name="new-password"
-                        id="new-password"
-                        autoComplete="new-password"
-                    />
-                </Form.Item>
+        <div className="form-container min-h-[80vh]">
+            <Header
+                mainTitle="Reset Your Password"
+                subTitle="Remembered your password?"
+                linkText="Log In"
+                linkUrl="/login"
+            />
 
-                <Form.Item
-                    name="confirmPassword"
-                    label="Подтвердите пароль"
-                    rules={[{ required: true, message: 'Подтвердите новый пароль!' }]}
-                >
-                    <Input.Password
-                        name="confirm-password"
-                        id="confirm-password"
-                        autoComplete="confirm-password"
+            <div className="inner-form-container">
+                <form onSubmit={handleSubmit(onFinish)} autoComplete="off">
+                    <Password
+                        register={register}
+                        errors={errors}
+                        getValues={getValues}
+                        showConfirmPasswordField={true}
+                        serverErrors={serverErrors}
                     />
-                </Form.Item>
 
-                <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                    <Button type="primary" htmlType="submit">
-                        Сбросить пароль
-                    </Button>
-                </Form.Item>
-            </Form>
+                    <div className="flex justify-center">
+                        <Button label="Reset Password" width="70%"/>
+                    </div>
+
+                </form>
+            </div>
         </div>
     );
 };

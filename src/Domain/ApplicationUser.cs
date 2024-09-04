@@ -6,7 +6,6 @@ namespace Domain
     {
         //public ICollection<Todo> Todos { get; set; }
         // Navigation property
-        
        
         public string? ResetPasswordToken { get; set; }
         public DateTime? ResetPasswordExpire { get; set; }

@@ -9,7 +9,7 @@ namespace UseCases.UserGroup
 {
     public partial class UserService
     {
-        public async Task<AppResponse<bool>> UserLogoutAsync(ClaimsPrincipal user)
+        public async Task<Result<bool>> UserLogoutAsync(ClaimsPrincipal user)
         {
             if (user.Identity?.IsAuthenticated ?? false)
             {
@@ -19,9 +19,9 @@ namespace UseCases.UserGroup
                 {
                     await _userManager.UpdateSecurityStampAsync(appUser);
                 }
-                return new AppResponse<bool>().SetSuccessResponse(true);
+                return new Result<bool>().SetSuccess(true);
             }
-            return new AppResponse<bool>().SetSuccessResponse(true);
+            return new Result<bool>().SetSuccess(true);
         }
     }
 }

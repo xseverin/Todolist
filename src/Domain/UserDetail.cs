@@ -10,8 +10,6 @@ public class UserDetail
     [Required]
     public string LastName { get; set; }
     [Required]
-    public string Address { get; set; }
-    [Required]
     
     // Foreign Key
     public string UserId { get; set; }

@@ -1,5 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Domain;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace Repository
 {
@@ -9,14 +14,13 @@ namespace Repository
         Task MakeDoneAsync(Guid todoId, string userId);
         Task MakeUndoneAsync(Guid todoId, string userId);
         Task ChangeNameAsync(Guid todoId, string name, string userId);
-        Task<IEnumerable<Todo>> GetTodosByUserIdAsync(string userId);
+        Task<string> GetTodosByUserIdAsync(string userId);
         Task<Todo?> GetTodoByIdAsync(Guid todoId, string userId);
         Task DeleteAsync(Guid id, string userId);
         Task DeleteAllDoneAsync(string userId);
         Task SaveChangesAsync();
-        Task<List<Todo>> GetAllAsync(string userId);
     }
-    
+
     public class TodoRepository : ITodoRepository
     {
         private readonly ApplicationDbContext _dbContext;
@@ -40,10 +44,25 @@ namespace Repository
                 throw new NullReferenceException("There is no todo with such id for the user.");
             }
 
+            await MarkTodoAndChildrenAsDoneAsync(todo);
+
+            await SaveChangesAsync();
+        }
+
+        private async Task MarkTodoAndChildrenAsDoneAsync(Todo todo)
+        {
             todo.Done = true;
 
+            var children = await _dbContext.Todos
+                .Where(t => t.ParentId == todo.Id)
+                .ToListAsync();
+
+            foreach (var child in children)
+            {
+                await MarkTodoAndChildrenAsDoneAsync(child);
+            }
+
             _dbContext.Todos.Update(todo);
-            await SaveChangesAsync();
         }
 
         public async Task MakeUndoneAsync(Guid todoId, string userId)
@@ -55,10 +74,25 @@ namespace Repository
                 throw new NullReferenceException("There is no todo with such id for the user.");
             }
 
+            await MarkTodoAndChildrenAsUndoneAsync(todo);
+
+            await SaveChangesAsync();
+        }
+
+        private async Task MarkTodoAndChildrenAsUndoneAsync(Todo todo)
+        {
             todo.Done = false;
 
+            var children = await _dbContext.Todos
+                .Where(t => t.ParentId == todo.Id)
+                .ToListAsync();
+
+            foreach (var child in children)
+            {
+                await MarkTodoAndChildrenAsUndoneAsync(child);
+            }
+
             _dbContext.Todos.Update(todo);
-            await SaveChangesAsync();
         }
 
         public async Task ChangeNameAsync(Guid todoId, string name, string userId)
@@ -76,12 +110,6 @@ namespace Repository
             await SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<Todo>> GetTodosByUserIdAsync(string userId)
-        {
-            return await _dbContext.Todos
-                .Where(t => t.ApplicationUserId == userId)
-                .ToListAsync();
-        }
         public async Task<Todo?> GetTodoByIdAsync(Guid todoId, string userId)
         {
             return await _dbContext.Todos
@@ -98,10 +126,25 @@ namespace Repository
                 throw new NullReferenceException("There is no todo with such id for the user.");
             }
 
-            _dbContext.Todos.Remove(todo);
+            await DeleteTodoAndChildrenAsync(todo);
+
             await SaveChangesAsync();
         }
-        
+
+        private async Task DeleteTodoAndChildrenAsync(Todo todo)
+        {
+            var children = await _dbContext.Todos
+                .Where(t => t.ParentId == todo.Id)
+                .ToListAsync();
+
+            foreach (var child in children)
+            {
+                await DeleteTodoAndChildrenAsync(child);
+            }
+
+            _dbContext.Todos.Remove(todo);
+        }
+
         public async Task DeleteAllDoneAsync(string userId)
         {
             var completedTodos = _dbContext.Todos
@@ -113,11 +156,49 @@ namespace Repository
 
         public async Task SaveChangesAsync() => await _dbContext.SaveChangesAsync();
 
-        public async Task<List<Todo>> GetAllAsync(string userId)
+        public async Task<List<Todo>> GetRootTodosAsync(string userId)
         {
-            return await _dbContext.Todos
-                .Where(t => t.ApplicationUserId == userId)
+            var rootTodos = await _dbContext.Todos
+                .Where(t => t.ApplicationUserId == userId && t.ParentId == null)
                 .ToListAsync();
+
+            foreach (var rootTodo in rootTodos)
+            {
+                await LoadChildrenAsync(rootTodo, 1);
+            }
+
+            return rootTodos;
+        }
+
+        private async Task LoadChildrenAsync(Todo parent, int depth)
+        {
+            var children = await _dbContext.Todos
+                .Where(t => t.ParentId == parent.Id && t.Deep == depth)
+                .Include(t => t.Children)
+                .ToListAsync();
+
+            parent.Children = children;
+
+            if (depth < 2)
+            {
+                foreach (var child in children)
+                {
+                    await LoadChildrenAsync(child, depth + 1);
+                }
+            }
+        }
+
+        public async Task<string> GetTodosByUserIdAsync(string userId)
+        {
+            var rootTodos = await GetRootTodosAsync(userId);
+
+            var settings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+
+            return JsonConvert.SerializeObject(rootTodos, settings);
         }
     }
 }

@@ -12,12 +12,12 @@ public partial class UserService
    
 
     
-    public async Task<AppResponse<bool>> ForgotPassword([FromBody] Domain.ForgotPasswordRequest request)
+    public async Task<Result<bool>> ForgotPassword([FromBody] Domain.ForgotPasswordRequest request)
     {
         var user = await _userRepository.GetUserByEmailAsync(request.Email);
         if (user == null)
         {
-            return new AppResponse<bool>().SetErrorResponse("User", "User not found");
+            return new Result<bool>().SetError("User", "User not found");
         }
 
         var resetToken = _tokenUtil.GenerateResetToken();
@@ -30,6 +30,6 @@ public partial class UserService
 
         _emailService.SendEmail("todolistemaily@gmail.com", "Todo App", user.Email, user.UserName, "Password reset token", message);
 
-        return new AppResponse<bool>().SetSuccessResponse(true);
+        return new Result<bool>().SetSuccess(true);
     }
 }

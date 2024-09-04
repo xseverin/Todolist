@@ -20,7 +20,7 @@ public partial class UserService
             Email = email,
             FirstName = userDetail.FirstName,
             LastName = userDetail.LastName,
-            Address = userDetail.Address
+            //Address = userDetail.Address
         };
 
         return userProfile;

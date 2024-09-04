@@ -21,6 +21,21 @@ namespace Domain
                 .WithMany()
                 .HasForeignKey(t => t.ApplicationUserId);
 
+            modelBuilder.Entity<Todo>()
+                .HasOne(t => t.Parent)
+                .WithMany(p => p.Children)
+                .HasForeignKey(t => t.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            
+            modelBuilder.Entity<Todo>()
+                .Property(t => t.Deep)
+                .HasDefaultValue(0)
+                .IsRequired();
+
+            modelBuilder.Entity<Todo>()
+                .HasCheckConstraint("CK_Todos_Deep", "[Deep] >= 0 AND [Deep] <= 2");
+            
             modelBuilder.Entity<SharedTodo>().HasKey(st => st.Id);
 
             modelBuilder.Entity<SharedTodo>()

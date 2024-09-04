@@ -1,13 +1,19 @@
 import axios from "axios";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-export const AddTodoApi = async ( name : string ) => {
-    const response = await axios.post(`${BASE_URL}/Todo/add`,
-        {
-            name: name,
-        }).catch((ex)=>{
-        console.log(ex);
-    });
-    return response?.data;
+export const AddTodoApi = async (name: string, parentId?: string) => {
+    const requestBody: any = { name };
+
+    if (parentId) {
+        requestBody.parentId = parentId;
+    }
+
+    try {
+        const response = await axios.post(`${BASE_URL}/Todo/add`, requestBody);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
 };
 
 export const UpdateTodoApi = async ( id: string, name : string ) => {

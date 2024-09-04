@@ -1,31 +1,61 @@
-import React from 'react';
-import TodoRow from './TodoRow';
-import TodoForm from "./TodoForm.tsx";
+import React, { useState, useEffect } from 'react';
+import CollapsibleTodoList from './CollapsibleTodoList';
+import TodoRow from "./TodoRow";
+import { Todo } from './Todo';
+import { FetchTodosApi } from './todoAPI';
 
-interface Todo {
-    id: string;
-    name: string;
-    done: boolean;
-}
 interface TodoTableProps {
-    todos: Todo[];
-    fetchTodos: () => void;
-    addTodo: (name: string) => void;
+    disableActions?: boolean;
 }
-const TodoTable: React.FC<TodoTableProps> = ({ todos, fetchTodos, addTodo }) => {
+
+const TodoTable: React.FC<TodoTableProps> = ({ disableActions = false }) => {
+    const [todos, setTodos] = useState<Todo[]>([]);
+    const [collapsedTodoIds, setCollapsedTodoIds] = useState<Set<string>>(new Set<string>());
+
+    const fetchTodos = async () => {
+        try {
+            const fetchedTodos = await FetchTodosApi();
+            setTodos(fetchedTodos);
+        } catch (error) {
+            console.error('Failed to fetch todos:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchTodos();
+    }, []);
+
+    const toggleCollapse = (id: string) => {
+        setCollapsedTodoIds(prev => {
+            const newCollapsedTodoIds = new Set(prev);
+            if (newCollapsedTodoIds.has(id)) {
+                newCollapsedTodoIds.delete(id);
+            } else {
+                newCollapsedTodoIds.add(id);
+            }
+            return newCollapsedTodoIds;
+        });
+    };
+
+    // Determine if there are no todos
+    const showPlaceholder = todos.length === 0;
+
     return (
-        
-            <table className="transition duration-300 ease-out hover:ease-in">
-                <tbody>
-                {todos.map(todo => (
-                    <TodoRow key={todo.id} todo={todo} fetchTodos={fetchTodos}/>
-                ))}
-
-  
-
-                <TodoForm addTodo={addTodo}/>
-                </tbody>
-            </table>
+        <div className="w-full ease-out hover:ease-in">
+            <CollapsibleTodoList
+                todos={todos}
+                collapsedTodoIds={collapsedTodoIds}
+                toggleCollapse={toggleCollapse}
+                fetchTodos={fetchTodos}
+                disableActions={disableActions}
+            />
+            {!disableActions && (
+                <TodoRow
+                    fetchTodos={fetchTodos}
+                    showPlaceholder={showPlaceholder} // Pass showPlaceholder prop
+                />
+            )}
+        </div>
     );
 };
 

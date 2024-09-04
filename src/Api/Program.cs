@@ -1,4 +1,4 @@
-using Data;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -127,9 +127,6 @@ namespace Api
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
-                using var scope = app.Services.CreateScope();
-                //var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
-                //initialiser.InitialiseAsync();
             }
             app.UseHttpsRedirection();
             app.UseCors("webAppRequests");

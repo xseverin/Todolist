@@ -90,8 +90,7 @@ public class UserServiceRegisterTests
             Email = "test@example.com",
             Password = "Password123!",
             FirstName = "John",
-            LastName = "Doe",
-            Address = "123 Main St"
+            LastName = "Doe"
         };
 
         _userManagerMock.Setup(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -115,8 +114,7 @@ public class UserServiceRegisterTests
             Email = "test@example.com",
             Password = "Password123!",
             FirstName = "John",
-            LastName = "Doe",
-            Address = "123 Main St"
+            LastName = "Doe"
         };
 
         var identityErrors = new IdentityError[]
@@ -145,8 +143,7 @@ public class UserServiceRegisterTests
             Email = "test@example.com",
             Password = "weak", // Weak password
             FirstName = "John",
-            LastName = "Doe",
-            Address = "123 Main St"
+            LastName = "Doe"
         };
 
         var identityErrors = new IdentityError[]

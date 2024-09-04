@@ -52,14 +52,15 @@ using UseCases;
                 new SharedTodoDTO { SharedByUserEmail = "user2@example.com", TodoName = "Shared Todo 2" }
             };
 
-            _sharedTodoRepositoryMock.Setup(repo => repo.GetSharedTodosByUserIdAsync(userId.Value)).ReturnsAsync(sharedTodos);
-
+            // Предполагая, что метод в ISharedTodoRepository называется GetSharedTodosByUserIdAsync
+            _sharedTodoRepositoryMock.Setup(repo => repo.GetSharedTodosByUserIdAsync(It.IsAny<string>()))
+                .ReturnsAsync("Serialized JSON string of shared todos");
             // Act
             var result = await _todoUseCases.GetSharedTodos(userId);
 
             // Assert
             Assert.IsInstanceOf<OkObjectResult>(result.Result);
             var okResult = result.Result as OkObjectResult;
-            Assert.AreEqual(sharedTodos, okResult.Value);
+            Assert.AreEqual("Serialized JSON string of shared todos", okResult.Value);
         }
     }

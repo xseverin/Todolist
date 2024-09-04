@@ -8,7 +8,7 @@ namespace UseCases.UserGroup
     public partial class UserService
     {
 
-        public async Task<AppResponse<bool>> UserRegisterAsync(UserRegisterRequest request)
+        public async Task<Result<bool>> UserRegisterAsync(UserRegisterRequest request)
         {
             var user = new ApplicationUser()
             {
@@ -23,17 +23,17 @@ namespace UseCases.UserGroup
                     Id = Guid.NewGuid(),
                     FirstName = request.FirstName,
                     LastName = request.LastName,
-                    Address = request.Address,
+                    //Address = request.Address,
                     UserId = user.Id
                 };
 
                 await _userDetailRepository.AddUserDetailAsync(userDetail);
 
-                return new AppResponse<bool>().SetSuccessResponse(true);
+                return new Result<bool>().SetSuccess(true);
             }
             else
             {
-                return new AppResponse<bool>().SetErrorResponse(GetRegisterErrors(result));
+                return new Result<bool>().SetError(GetRegisterErrors(result));
             }
         }
 

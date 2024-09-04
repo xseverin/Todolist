@@ -13,27 +13,21 @@ namespace UseCases.UserGroup
     }
     public partial class UserService
     {
-        public async Task<AppResponse<UserLoginResponse>> UserLoginAsync(UserLoginRequest request)
+        public async Task<Result<UserLoginResponse>> UserLoginAsync(UserLoginRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
             {
+                return new Result<UserLoginResponse>().SetError("error", "Email or password is incorrect");
+            }
 
-                return new AppResponse<UserLoginResponse>().SetErrorResponse("error", "Email or password is incorrect");
-            }
-            else
-            {
-                var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, true);
-                if (result.Succeeded)
-                {
-                    var token = await GenerateUserToken(user);
-                    return new AppResponse<UserLoginResponse>().SetSuccessResponse(token);
-                }
-                else
-                {
-                    return new AppResponse<UserLoginResponse>().SetErrorResponse("error", "Email or password is incorrect");
-                }
-            }
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, true);
+            
+            if (!result.Succeeded)
+                return new Result<UserLoginResponse>().SetError("error", "Email or password is incorrect");
+            
+            var token = await GenerateUserToken(user);
+            return new Result<UserLoginResponse>().SetSuccess(token);
         }
 
     }

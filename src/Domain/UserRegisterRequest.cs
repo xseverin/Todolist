@@ -13,6 +13,4 @@ public class UserRegisterRequest
     public string FirstName { get; set; }
     [Required(ErrorMessage = "The last name field is required.")]
     public string LastName { get; set; }
-    [Required(ErrorMessage = "The address field is required.")]
-    public string Address { get; set; }
 }

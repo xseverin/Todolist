@@ -5,12 +5,12 @@ namespace UseCases.UserGroup;
 
 public partial class UserService
 {
-    public async Task<AppResponse<bool>> UpdateProfileAsync(ClaimsPrincipal User, UserProfile request)
+    public async Task<Result<bool>> UpdateProfileAsync(ClaimsPrincipal User, UserProfile request)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return new AppResponse<bool>().SetErrorResponse("user", "User not found."); 
+            return new Result<bool>().SetError("user", "User not found."); 
         }
 
       
@@ -22,7 +22,7 @@ public partial class UserService
             var emailResult = await _userManager.SetEmailAsync(user, request.Email);
             if (!emailResult.Succeeded)
             {
-                return new AppResponse<bool>().SetErrorResponse("email", "Failed to update email."); 
+                return new Result<bool>().SetError("email", "Failed to update email."); 
             }
         }
 
@@ -31,22 +31,19 @@ public partial class UserService
         var identityResult = await _userManager.UpdateAsync(user);
         if (!identityResult.Succeeded)
         {
-            return new AppResponse<bool>().SetErrorResponse("user profile", "Failed to update user profile."); 
+            return new Result<bool>().SetError("user profile", "Failed to update user profile."); 
         }
 
         
         // Update other user properties
         var userDetail = await _userDetailRepository.GetUserDetailAsync(user.Id);
      
-            userDetail.FirstName = request.FirstName;
-            userDetail.LastName = request.LastName;
-            userDetail.Address = request.Address;
-            _userDetailRepository.UpdateUserDetailAsync(userDetail);
-        
+        userDetail.FirstName = request.FirstName;
+        userDetail.LastName = request.LastName;
+        //userDetail.Address = request.Address;
+        await _userDetailRepository.UpdateUserDetailAsync(userDetail);
 
-        //await _userRepository.SaveChangesAsync();
-
-        return new AppResponse<bool>().SetSuccessResponse(true);
+        return new Result<bool>().SetSuccess(true);
 
     }
 }
